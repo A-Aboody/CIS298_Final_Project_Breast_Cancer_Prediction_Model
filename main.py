@@ -9,5 +9,14 @@ def load_data():
 
     return processed_data
 
-data = load_data()
-print(data)
+def normalize_input(user_input):
+    data = load_data()
+    features = data.drop(['diagnosis'], axis = 1) # removing the prediction from the data set
+    normalized_value = {}
+
+    for key, value in user_input.items():
+        max = features[key].max()
+        min = features[key].min()
+        normalized_value[key] = (value - min) / (max - min)
+
+    return normalized_value
