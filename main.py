@@ -63,3 +63,12 @@ def configure_sidebar():
     ]
 
     user_input = {}
+    for label, key in measurement_labels:
+        user_input[key] = st.sidebar.slider(
+            label,
+            min_value=float(0),
+            max_value=float(dataset[key].max()),
+            value=float(dataset[key].mean())
+        )
+
+    return user_input
