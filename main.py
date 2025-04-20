@@ -141,4 +141,5 @@ def main():
         st.title("Breast Cancer Prediction")
         st.plotly_chart(create_radar_chart(user_input))
 
-main()
+if __name__ == '__main__':
+    main()
