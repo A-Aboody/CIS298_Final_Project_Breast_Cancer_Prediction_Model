@@ -4,9 +4,10 @@ A Streamlit web application that predicts breast cancer diagnosis (benign/malign
 
 ![image](https://github.com/user-attachments/assets/ec9420db-13aa-44ac-a2a3-f5fda1ab46e2)
 
-**Developer**: Abdula Ameen
 
 ## Key Contributions
+
+**Developer**: Abdula Ameen
 
 ### Model Infrastructure
 - Implemented Logistic Regression model with 95%+ accuracy
