@@ -5,178 +5,224 @@ import plotly.graph_objects as go
 import numpy as np
 
 def load_data():
-    raw_data = pd.read_csv("data/data.csv")
+    try:
+        raw_data = pd.read_csv("data/data.csv")
+    except FileNotFoundError:
+        st.error("Error: data/data.csv not found. Please ensure the data file exists.")
+        return None
 
-    processed_data = raw_data.drop(['Unnamed: 32', 'id'], axis=1)
+    processed_data = raw_data.drop(columns=['Unnamed: 32', 'id'], errors='ignore')
 
-    processed_data['diagnosis'] = processed_data['diagnosis'].map({'M': 1, 'B': 0})
+    if 'diagnosis' in processed_data.columns:
+        processed_data['diagnosis'] = processed_data['diagnosis'].map({'M': 1, 'B': 0})
+    else:
+        st.error("Error: 'diagnosis' column not found in the data.")
+        return None
+
+    expected_features = [
+        'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
+        'compactness_mean', 'concavity_mean', 'concave points_mean', 'symmetry_mean', 'fractal_dimension_mean',
+        'radius_se', 'texture_se', 'perimeter_se', 'area_se', 'smoothness_se', 'compactness_se',
+        'concavity_se', 'concave points_se', 'symmetry_se', 'fractal_dimension_se',
+        'radius_worst', 'texture_worst', 'perimeter_worst', 'area_worst', 'smoothness_worst',
+        'compactness_worst', 'concavity_worst', 'concave points_worst', 'symmetry_worst', 'fractal_dimension_worst'
+    ]
+    missing_cols = [col for col in expected_features if col not in processed_data.columns]
+    if missing_cols:
+        st.error(f"Error: The following expected feature columns are missing: {', '.join(missing_cols)}")
+        return None
 
     return processed_data
 
-def configure_sidebar():
-    st.sidebar.header("Cell Nuclei Measurements")
+def configure_sidebar(dataset):
+    st.sidebar.header("Input Measurements")
+    st.sidebar.caption("Adjust the values below")
 
-    dataset = load_data()
-    measurement_labels = [
-        ("Radius (Mean)", "radius_mean"),
-        ("Texture (Mean)", "texture_mean"),
-        ("Perimeter (Mean)", "perimeter_mean"),
-        ("Area (Mean)", "area_mean"),
-        ("Smoothness (Mean)", "smoothness_mean"),
-        ("Compactness (Mean)", "compactness_mean"),
-        ("Concavity (Mean)", "concavity_mean"),
-        ("Concave points (Mean)", "concave points_mean"),
-        ("Symmetry (Mean)", "symmetry_mean"),
-        ("Fractal dimension (Mean)", "fractal_dimension_mean"),
-        ("Radius (Standard Error)", "radius_se"),
-        ("Texture (Standard Error)", "texture_se"),
-        ("Perimeter (Standard Error)", "perimeter_se"),
-        ("Area (Standard Error)", "area_se"),
-        ("Smoothness (Standard Error)", "smoothness_se"),
-        ("Compactness (Standard Error)", "compactness_se"),
-        ("Concavity (Standard Error)", "concavity_se"),
-        ("Concave points (Standard Error)", "concave points_se"),
-        ("Symmetry (Standard Error)", "symmetry_se"),
-        ("Fractal dimension (Standard Error)", "fractal_dimension_se"),
-        ("Radius (Worst)", "radius_worst"),
-        ("Texture (Worst)", "texture_worst"),
-        ("Perimeter (Worst)", "perimeter_worst"),
-        ("Area (Worst)", "area_worst"),
-        ("Smoothness (Worst)", "smoothness_worst"),
-        ("Compactness (Worst)", "compactness_worst"),
-        ("Concavity (Worst)", "concavity_worst"),
-        ("Concave points (Worst)", "concave points_worst"),
-        ("Symmetry (Worst)", "symmetry_worst"),
-        ("Fractal dimension (Worst)", "fractal_dimension_worst"),
-    ]
+    measurement_labels = {
+        "Mean": [
+            ("Radius", "radius_mean"), ("Texture", "texture_mean"), ("Perimeter", "perimeter_mean"),
+            ("Area", "area_mean"), ("Smoothness", "smoothness_mean"), ("Compactness", "compactness_mean"),
+            ("Concavity", "concavity_mean"), ("Concave points", "concave points_mean"),
+            ("Symmetry", "symmetry_mean"), ("Fractal dimension", "fractal_dimension_mean")
+        ],
+        "Standard Error": [
+            ("Radius", "radius_se"), ("Texture", "texture_se"), ("Perimeter", "perimeter_se"),
+            ("Area", "area_se"), ("Smoothness", "smoothness_se"), ("Compactness", "compactness_se"),
+            ("Concavity", "concavity_se"), ("Concave points", "concave points_se"),
+            ("Symmetry", "symmetry_se"), ("Fractal dimension", "fractal_dimension_se")
+        ],
+        "Worst": [
+            ("Radius", "radius_worst"), ("Texture", "texture_worst"), ("Perimeter", "perimeter_worst"),
+            ("Area", "area_worst"), ("Smoothness", "smoothness_worst"), ("Compactness", "compactness_worst"),
+            ("Concavity", "concavity_worst"), ("Concave points", "concave points_worst"),
+            ("Symmetry", "symmetry_worst"), ("Fractal dimension", "fractal_dimension_worst")
+        ]
+    }
 
     user_input = {}
 
-    for label, key in measurement_labels:
-        user_input[key] = st.sidebar.slider(
-            label,
-            min_value=float(0),
-            max_value=float(dataset[key].max()),
-            value=float(dataset[key].mean())
-        )
+    for category, items in measurement_labels.items():
+        with st.sidebar.expander(f"{category} Values", expanded=(category == "Mean")):
+            for label, key in items:
+                if key in dataset.columns:
+                    user_input[key] = st.slider(
+                        label=f"{label}",
+                        min_value=float(0),
+                        max_value=float(dataset[key].max()),
+                        value=float(dataset[key].mean()),
+                        key=key,
+                        format="%.4f"
+                    )
+                else:
+                    user_input[key] = 0
 
     return user_input
 
-def normalize_input(user_input):
-    dataset = load_data()
-
+def normalize_input(user_input, dataset):
     features = dataset.drop(['diagnosis'], axis=1)
-
     normalized_values = {}
-
     for key, value in user_input.items():
-        max_val = features[key].max()
-        min_val = features[key].min()
-        normalized_values[key] = (value - min_val) / (max_val - min_val)
-
+        if key in features.columns:
+            max_val = features[key].max()
+            min_val = features[key].min()
+            normalized_values[key] = 0 if max_val == min_val else (value - min_val) / (max_val - min_val)
+        else:
+             normalized_values[key] = 0
     return normalized_values
 
-def create_radar_chart(normalized_input):
-    normalized_input = normalize_input(normalized_input)
-
-    measurement_categories = ['Radius', 'Texture', 'Perimeter', 'Area', 
-                              'Smoothness', 'Compactness', 
-                              'Concavity', 'Concave Points',
-                              'Symmetry', 'Fractal Dimension']
+def create_radar_chart(user_input, dataset):
+    normalized_input_vals = normalize_input(user_input, dataset)
+    measurement_categories = ['Radius', 'Texture', 'Perimeter', 'Area',
+                             'Smoothness', 'Compactness', 'Concavity', 'Concave Points',
+                             'Symmetry', 'Fractal Dimension']
+    color_sequence = ['#1f77b4', '#ff7f0e', '#2ca02c']
+    fill_alpha = 0.4
+    rgba_colors = [
+        f'rgba(31, 119, 180, {fill_alpha})',
+        f'rgba(255, 127, 14, {fill_alpha})',
+        f'rgba(44, 160, 44, {fill_alpha})'
+    ]
 
     chart = go.Figure()
 
     chart.add_trace(go.Scatterpolar(
-        r=[
-            normalized_input['radius_mean'], normalized_input['texture_mean'], normalized_input['perimeter_mean'],
-            normalized_input['area_mean'], normalized_input['smoothness_mean'], normalized_input['compactness_mean'],
-            normalized_input['concavity_mean'], normalized_input['concave points_mean'], normalized_input['symmetry_mean'],
-            normalized_input['fractal_dimension_mean']
-        ],
+        r=[normalized_input_vals.get(f'{cat.lower().replace(" ", "")}_mean', 0) for cat in measurement_categories],
         theta=measurement_categories,
         fill='toself',
-        name='Mean Value'
+        name='Mean Value',
+        line=dict(color=color_sequence[0]),
+        fillcolor=rgba_colors[0]
     ))
 
     chart.add_trace(go.Scatterpolar(
-        r=[
-            normalized_input['radius_se'], normalized_input['texture_se'], normalized_input['perimeter_se'],
-            normalized_input['area_se'], normalized_input['smoothness_se'], normalized_input['compactness_se'],
-            normalized_input['concavity_se'], normalized_input['concave points_se'], normalized_input['symmetry_se'],
-            normalized_input['fractal_dimension_se']
-        ],
+        r=[normalized_input_vals.get(f'{cat.lower().replace(" ", "")}_se', 0) for cat in measurement_categories],
         theta=measurement_categories,
         fill='toself',
-        name='Standard Error'
+        name='Standard Error',
+        line=dict(color=color_sequence[1]),
+        fillcolor=rgba_colors[1]
     ))
 
     chart.add_trace(go.Scatterpolar(
-        r=[
-            normalized_input['radius_worst'], normalized_input['texture_worst'], normalized_input['perimeter_worst'],
-            normalized_input['area_worst'], normalized_input['smoothness_worst'], normalized_input['compactness_worst'],
-            normalized_input['concavity_worst'], normalized_input['concave points_worst'], normalized_input['symmetry_worst'],
-            normalized_input['fractal_dimension_worst']
-        ],
+        r=[normalized_input_vals.get(f'{cat.lower().replace(" ", "")}_worst', 0) for cat in measurement_categories],
         theta=measurement_categories,
         fill='toself',
-        name='Worst Value'
+        name='Worst Value',
+        line=dict(color=color_sequence[2]),
+        fillcolor=rgba_colors[2]
     ))
 
     chart.update_layout(
         polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 1]
-            )),
-        showlegend=True
+            bgcolor='rgba(0,0,0,0)',
+            angularaxis=dict(linecolor="#cccccc", gridcolor="#777777"),
+            radialaxis=dict(visible=True, range=[0, 1], linecolor="#cccccc", gridcolor="#777777", tickfont=dict(color='#ffffff'))
+        ),
+        showlegend=True,
+        legend=dict(font=dict(color="#ffffff")),
+        title=dict(text="Normalized Cell Measurements", x=0.5, font=dict(color='#ffffff')),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=40, r=40, t=80, b=40)
     )
 
     return chart
 
-def make_predictions(user_input):
-    trained_model = pickle.load(open("model/model.pkl", "rb"))
-    trained_scaler = pickle.load(open("model/scaler.pkl", "rb"))
+def display_predictions(user_input):
+    try:
+        trained_model = pickle.load(open("model/model.pkl", "rb"))
+        trained_scaler = pickle.load(open("model/scaler.pkl", "rb"))
+    except FileNotFoundError:
+        st.error("Error: Model or scaler file not found.")
+        return
+    except Exception as e:
+        st.error(f"Error loading model/scaler: {e}")
+        return
 
-    input_features = np.array(list(user_input.values())).reshape(1, -1)
+    feature_keys_ordered = [
+        'radius_mean', 'texture_mean', 'perimeter_mean', 'area_mean', 'smoothness_mean',
+        'compactness_mean', 'concavity_mean', 'concave points_mean', 'symmetry_mean', 'fractal_dimension_mean',
+        'radius_se', 'texture_se', 'perimeter_se', 'area_se', 'smoothness_se', 'compactness_se',
+        'concavity_se', 'concave points_se', 'symmetry_se', 'fractal_dimension_se',
+        'radius_worst', 'texture_worst', 'perimeter_worst', 'area_worst', 'smoothness_worst',
+        'compactness_worst', 'concavity_worst', 'concave points_worst', 'symmetry_worst', 'fractal_dimension_worst'
+    ]
+    input_values = [user_input.get(key, 0) for key in feature_keys_ordered]
+    input_features = np.array(input_values).reshape(1, -1)
 
-    scaled_features = trained_scaler.transform(input_features)
+    try:
+        scaled_features = trained_scaler.transform(input_features)
+        prediction_result = trained_model.predict(scaled_features)
+        prediction_proba = trained_model.predict_proba(scaled_features)
+    except Exception as e:
+         st.error(f"Error during prediction: {e}")
+         return
 
-    prediction_result = trained_model.predict(scaled_features)
-
-    st.subheader("Prediction Result")
-    st.write("The cell cluster is predicted to be:")
-
+    st.header("Prediction Result")
     if prediction_result[0] == 0:
-        st.write("<span class='diagnosis benign'>Benign</span>", unsafe_allow_html=True)
+        st.markdown("<div class='diagnosis-card benign'><h3>Benign</h3></div>", unsafe_allow_html=True)
     else:
-        st.write("<span class='diagnosis malignant'>Malignant</span>", unsafe_allow_html=True)
+        st.markdown("<div class='diagnosis-card malignant'><h3>Malignant</h3></div>", unsafe_allow_html=True)
 
-    st.write("Probability of being benign: ", trained_model.predict_proba(scaled_features)[0][0])
-    st.write("Probability of being malignant: ", trained_model.predict_proba(scaled_features)[0][1])
+    st.metric(label="Confidence (Benign)", value=f"{prediction_proba[0][0]:.1%}")
+    st.metric(label="Confidence (Malignant)", value=f"{prediction_proba[0][1]:.1%}")
 
 def main():
     st.set_page_config(
         page_title="Breast Cancer Prediction Model",
+        page_icon="./BCPM.png",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
-    with open("assets/style.css") as css_file:
-        st.markdown("<style>{}</style>".format(css_file.read()), unsafe_allow_html=True)
+    try:
+        with open("assets/style.css") as css_file:
+            st.markdown(f"<style>{css_file.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.markdown("""
+            <style>
+            body { background-color: #0E1117; color: #FAFAFA; }
+            .stApp { background-color: #0E1117; }
+            </style>
+        """, unsafe_allow_html=True)
 
-    user_input = configure_sidebar()
+    dataset = load_data()
+    if dataset is None:
+        st.stop()
 
-    with st.container():
-        st.title("Breast Cancer Prediction")
+    user_input_values = configure_sidebar(dataset)
 
-    col1, col2 = st.columns([4, 1])
+    st.title("Breast Cancer Prediction Dashboard")
+
+    col1, col2 = st.columns([3, 1], gap="large")
 
     with col1:
-        radar_chart = create_radar_chart(user_input)
-        st.plotly_chart(radar_chart)
+        st.header("Cell Measurements Visualization")
+        radar_chart = create_radar_chart(user_input_values, dataset)
+        st.plotly_chart(radar_chart, use_container_width=True)
 
     with col2:
-        make_predictions(user_input)
+        display_predictions(user_input_values)
 
 if __name__ == '__main__':
     main()

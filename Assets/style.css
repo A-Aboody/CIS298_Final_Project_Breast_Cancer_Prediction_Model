@@ -1,19 +1,83 @@
-.css-j5r0tf {
-    padding: 1rem;
+body {
+    color: #FAFAFA;
+    background-color: #0E1117;
+}
+
+.stApp {
+    background-color: #0E1117;
+}
+
+[data-testid="stSidebar"] {
+    background-color: #161A24;
+    border-right: 1px solid #333;
+}
+
+[data-testid="stSidebar"] .st-emotion-cache-10oheav {
+    color: #ECECEC;
+    font-size: 1.6em;
+}
+
+[data-testid="stSidebar"] .stCaptionContainer {
+    color: #A0A0A0;
+}
+
+[data-testid="stExpander"] summary {
+    font-size: 1.05em;
+    font-weight: bold;
+    color: #C0C0C0;
+}
+
+[data-testid="stExpander"] summary:hover {
+    color: #FFFFFF;
+}
+
+[data-testid="stSidebar"] .stSlider label {
+     color: #B0B0B0 !important;
+     font-size: 0.9em;
+}
+
+h1, h2, h3 {
+    color: #ECECEC;
+}
+
+.diagnosis-card {
+    color: #000000;
+    padding: 0.75rem 0.5rem;
     border-radius: 0.5rem;
-    background-color: #7E99AB;
+    text-align: center;
+    margin: 0.5rem 0;
+    border: 1px solid;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
 }
-  
-.diagnosis {
-    color: #fff;
-    padding: 0.2em 0.5em;
-    border-radius: 0.5em;
+
+.diagnosis-card h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #000000;
 }
-  
-.diagnosis.benign {
-    background-color: #1b572f
+
+.diagnosis-card.benign {
+    background-color: #90ee90;
+    border-color: #2ca02c;
 }
-  
-.diagnosis.malicious {
-    background-color: #640909
+
+.diagnosis-card.malignant {
+    background-color: #f08080;
+    border-color: #d62728;
+}
+
+[data-testid="stMetricLabel"] {
+    color: #A0A0A0;
+}
+
+[data-testid="stMetricValue"] {
+    color: #FFFFFF;
+}
+
+a {
+    color: #1f77b4;
+}
+
+.stCaptionContainer {
+    color: #888888;
 }
