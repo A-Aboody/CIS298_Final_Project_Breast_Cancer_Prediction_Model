@@ -7,7 +7,7 @@ A Streamlit web application that predicts breast cancer diagnosis (benign/malign
 
 ## Key Contributions
 
-**Developer**: Abdula Ameen
+**Developer**: Abdula Ameen:
 
 ### Model Infrastructure
 - Implemented Logistic Regression model with 95%+ accuracy
@@ -29,5 +29,5 @@ Michael and Safar add your contributions before technical stack
 - **Data**: Wisconsin Breast Cancer Dataset
 
 ## How to Run
-pip install -r requirements.txt
+pip install -r requirements.txt <br>
 python -m streamlit run App/main.py
