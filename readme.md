@@ -19,6 +19,8 @@ Abdula Ameen:
 - Developed real-time prediction interface
 - Added confidence percentage metrics for predictions
 - Implemented input validation and error handling
+
+**Developer**: 
 Michael Luong:
 
 ### Streamlit Integration:
@@ -26,6 +28,7 @@ Michael Luong:
 
 ### Data Loading Function:
 - Utilized csv library to load and normalize data
+
 /*
 Michael and Safar add your contributions before technical stack
 */
