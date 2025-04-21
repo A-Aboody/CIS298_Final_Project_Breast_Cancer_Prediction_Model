@@ -29,9 +29,22 @@ Michael Luong:
 ### Data Loading Function:
 - Utilized csv library to load and normalize data
 
-/*
-Michael and Safar add your contributions before technical stack
-*/
+**Developer**:
+Safar Koussan:
+
+### Model Infrastructure
+- Made an interactive sidebar for user input with Streamlit
+
+### Using Streamlit
+- configure_sidebar function generated sliders for all of the attributes on the csv
+- I made clear labels to show what is being changed and it is updated in real time with the diagram
+
+### Data Loading
+- Used panda to load and process data
+
+
+
+
 
 ## Technical Stack
 - **Backend**: Python, Scikit-learn, Pandas, Pickle
